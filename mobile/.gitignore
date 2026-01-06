@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build outputs
+dist/
+build/
+
+# Uploads (keep folder structure, ignore contents)
+backend/uploads/beys/*
+backend/uploads/museums/*
+backend/uploads/profiles/*
+backend/uploads/misc/*
+!backend/uploads/**/.gitkeep
+
+# Mobile specific
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# Expo
+.expo/
+expo-env.d.ts
+
+# Metro
+.metro-health-check*
+
+# Testing
+coverage/
+
+# Misc
+*.tgz
+.npm
+.cache

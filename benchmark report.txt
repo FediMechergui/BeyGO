@@ -1,0 +1,353 @@
+Benchmark Report
+API for Museums – Tunisian Beylical Era
+
+1. Introduction
+The digital transformation of museums in Tunisia remains limited, particularly regarding interactive
+and location-based visitor engagement. Most existing digital solutions focus on static information
+delivery, such as websites or QR-code descriptions, which do not signiﬁcantly enhance on-site
+exploration or long-term cultural learning. This benchmark report presents an innovative concept: an
+API dedicated to museums related to the Tunisian Beylical era, enabling a gamiﬁed, locationlocked, and exploratory museum experience inspired by location-based games such as Pokémon
+Go. The proposed API connects historical data about Tunisian Beys with physical museum visits,
+encouraging users to explore museum spaces actively while learning about history in an engaging and
+structured manner.
+
+2. Core Concept and Innovation
+The core idea of the project is to transform museum visits into an interactive cultural quest. When
+visitors enter a museum, the application powered by the API detects their location and presents only
+the Beys historically associated with that speciﬁc museum. Visitors select a Bey and receive
+structured historical information before starting a physical exploration challenge inside the museum.
+Unlike traditional quizzes or remote educational apps, this system cannot be fully used outside
+museum spaces, ensuring relevance, authenticity, and physical engagement. Progress is achieved by
+moving through the museum and collecting virtual puzzle pieces representing the selected Bey’s
+portrait. Completing the puzzle unlocks additional historical content and rewards, reinforcing learning
+through discovery.
+
+3. Scope of the Project
+Included in Scope:
+
+
+Beylical period in Tunisia (1593–1957)
+
+
+
+Museums in Tunisia housing artifacts, documents, or information related to Beys
+
+
+
+Cultural and tourist partnerships within Tunisia
+
+
+
+Indoor, museum-only gamiﬁed challenges
+
+Excluded from Scope:
+
+
+Pre-Islamic Tunisia
+
+
+
+Ottoman Empire outside Tunisia
+
+4. Benchmark and Competitive Landscape
+Current Situation in Tunisia
+
+
+Museum Digital Presence: Most Tunisian museums provide minimal digital engagement.
+Online catalogs are rare; only a few museums have basic information on websites.
+
+
+
+Tourism Apps: Apps exist for general tourism in Tunisia, but none focus on historical Bey
+content or museum-only gamiﬁed exploration.
+
+
+
+AR / Gamiﬁcation in Museums: Almost non-existent. No known AR or indoor game platform is
+deployed in Tunisian museums.
+
+Observed Weaknesses
+
+
+Limited interactive experiences for visitors
+
+
+
+Lack of museum networking (each museum is isolated digitally)
+
+
+
+No incentive mechanisms for visiting multiple sites
+
+
+
+Education is mostly passive; no gamiﬁed learning exists
+
+Relevance and Opportunities
+
+
+High potential for cultural tourism engagement, as Tunisia has rich historical Bey heritage
+
+
+
+Gamiﬁcation can enhance learning outcomes for school groups and tourists
+
+
+
+Opportunity to partner with tourism operators and local businesses
+
+Feature Requirement Analysis
+Feature / Requirement
+
+Existing Solution in
+Tunisia
+
+Proposed API Implementation
+
+Bey-focused historical
+content
+
+None
+
+Yes – all Bey information from dataset
+
+Museum-only access
+control
+
+None
+
+Yes – API restricts challenges to museum
+location
+
+Puzzle / gamiﬁed indoor
+exploration
+
+None
+
+Yes – users collect puzzle pieces in physical
+museum space
+
+Cross-museum cultural
+networking
+
+None
+
+Yes – API suggests related museums for further
+exploration
+
+Reward & Partnership
+System
+
+None
+
+Yes – discounts and o ers with museums,
+cafes, and cultural sites
+
+5. Feasibility Assessment
+
+
+
+
+
+
+Technical Feasibility:
+o
+
+Indoor AR or GPS-like guidance possible using beacon technology or simpliﬁed hotspot
+maps
+
+o
+
+Puzzles can be implemented with static image collections and user interactions
+
+o
+
+Mobile app can integrate museum location detection with existing APIs (Google Maps,
+Wi-Fi triangulation, or QR code check-ins)
+
+Operational Feasibility:
+o
+
+Requires collaboration with museums to identify available Beys and hotspots
+
+o
+
+Partnerships with local businesses can provide rewards and incentives
+
+Market Feasibility:
+o
+
+Cultural tourism in Tunisia is growing
+
+o
+
+Students, tourists, and locals interested in history provide target audience
+
+o
+
+No direct competition; ﬁrst-of-its-kind Bey-focused educational game platform
+
+6. Strategic and Economic Value
+
+
+Visitor Engagement: Extends time spent inside museums and promotes active learning
+
+
+
+Museum Discovery: Encourages exploration of lesser-known museums through networked
+challenges
+
+
+
+Cultural Tourism: Supports tourism ecosystem via partnerships and gamiﬁed rewards
+
+
+
+Education: Strengthens knowledge of Tunisian Beylical history in an interactive format
+
+
+
+Scalable Platform: Can be extended to other historical periods or heritage projects in Tunisia
+
+7. Workﬂow Diagram (Conceptual Explanation)
+The workﬂow of the system can be described in sequential stages:
+Step 1: App Launch and Location Detection
+
+
+The user opens the mobile application.
+
+
+
+The application uses an external location service (e.g., maps or geofencing API) to detect the
+current museum.
+
+
+
+Access to challenges is enabled only if the user is physically inside a recognized museum.
+
+Step 2: Museum Context and Bey Selection
+
+
+Based on the detected museum, the API returns a list of Beys historically associated with that
+museum.
+
+
+
+The user selects one Bey from the available list.
+
+Step 3: Historical Brieﬁng
+
+
+
+
+The API provides structured historical information about the selected Bey, including:
+o
+
+Reign period,
+
+o
+
+Dynasty,
+
+o
+
+Main residence,
+
+o
+
+Currency used,
+
+o
+
+Key historical events.
+
+This phase establishes educational grounding before gameplay begins.
+
+Step 4: Start the Museum Challenge
+
+
+The challenge activates only inside the museum.
+
+
+
+A mini-map or exploration indicator guides the user through di erent museum zones.
+
+
+
+As the user physically moves, virtual puzzle pieces are unlocked.
+
+Step 5: Puzzle Collection
+
+
+Each collected piece represents a fragment of the Bey’s portrait.
+
+
+
+Pieces are earned through movement and exploration rather than scanning complex objects.
+
+
+
+The mechanic emphasizes discovery without requiring detailed artifact inventories.
+
+Step 6: Puzzle Completion and Reward Unlock
+
+
+Once all puzzle pieces are collected, the Bey’s portrait is completed.
+
+
+
+The user unlocks:
+o
+
+Additional narrative content,
+
+o
+
+Cultural insights,
+
+o
+
+Achievement points or badges.
+
+Step 7: Cultural Network and Recommendations
+
+
+The API suggests other Tunisian museums related to the same Bey.
+
+
+
+This creates a networked cultural journey across institutions.
+
+Step 8: Rewards and Partnerships
+
+
+Points earned can be exchanged for beneﬁts such as:
+
+
+
+o
+
+Museum discounts,
+
+o
+
+Access to partner touristic or cultural services (e.g., traditional crafts, guided heritage
+experiences).
+
+This encourages repeated museum visits and broader cultural tourism.
+
+8. User Experience (UX)
+
+.
+
+This experience ensures that learning is experiential, contextual, and memorable, rather than
+passive.
+
+9. Conclusion
+This benchmark report demonstrates that the proposed API introduces a novel, feasible, and
+culturally relevant approach to museum engagement in Tunisia. By leveraging location-based
+interaction and gamiﬁcation centered on the Beylical era, the project ﬁlls a clear gap in the digital
+heritage ecosystem and establishes a strong foundation for academic, cultural, and economic
+impact.
+
+
