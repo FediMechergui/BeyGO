@@ -3,9 +3,34 @@ const router = express.Router();
 const Dynasty = require('../models/Dynasty');
 const Bey = require('../models/Bey');
 
-// @route   GET /api/dynasties
-// @desc    Get all dynasties
-// @access  Public
+/**
+ * @swagger
+ * /dynasties:
+ *   get:
+ *     summary: Get all dynasties
+ *     tags: [Dynasties]
+ *     responses:
+ *       200:
+ *         description: List of all dynasties with bey counts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     allOf:
+ *                       - $ref: '#/components/schemas/Dynasty'
+ *                       - type: object
+ *                         properties:
+ *                           beyCount:
+ *                             type: integer
+ */
 router.get('/', async (req, res) => {
   try {
     const dynasties = await Dynasty.find().sort({ startYear: 1 });
@@ -35,9 +60,43 @@ router.get('/', async (req, res) => {
   }
 });
 
-// @route   GET /api/dynasties/:id
-// @desc    Get single dynasty with its beys
-// @access  Public
+/**
+ * @swagger
+ * /dynasties/{id}:
+ *   get:
+ *     summary: Get single dynasty with its beys
+ *     tags: [Dynasties]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Dynasty ID
+ *     responses:
+ *       200:
+ *         description: Dynasty details with list of beys
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     dynasty:
+ *                       $ref: '#/components/schemas/Dynasty'
+ *                     beys:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Bey'
+ *                     beyCount:
+ *                       type: integer
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
 router.get('/:id', async (req, res) => {
   try {
     const dynasty = await Dynasty.findById(req.params.id);

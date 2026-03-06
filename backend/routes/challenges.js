@@ -12,9 +12,71 @@ require('../models/Dynasty');
 require('../models/Museum');
 const { protect } = require('../middleware/auth');
 
-// @route   POST /api/challenges/start
-// @desc    Start a puzzle challenge for a bey
-// @access  Private
+/**
+ * @swagger
+ * /challenges/start:
+ *   post:
+ *     summary: Start a puzzle challenge for a bey
+ *     tags: [Challenges]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - beyId
+ *             properties:
+ *               beyId:
+ *                 type: string
+ *                 description: Bey ID to start challenge for
+ *               visitId:
+ *                 type: string
+ *                 description: Optional specific visit ID
+ *               museumId:
+ *                 type: string
+ *                 description: Museum ID
+ *               latitude:
+ *                 type: number
+ *               longitude:
+ *                 type: number
+ *     responses:
+ *       201:
+ *         description: Challenge started
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     challenge:
+ *                       $ref: '#/components/schemas/PuzzleChallenge'
+ *                     puzzleGrid:
+ *                       type: object
+ *                       properties:
+ *                         rows:
+ *                           type: integer
+ *                         cols:
+ *                           type: integer
+ *                         totalPieces:
+ *                           type: integer
+ *                     isExisting:
+ *                       type: boolean
+ *       400:
+ *         description: Must start museum visit first or already completed
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         description: Bey not found
+ */
 router.post('/start', protect, async (req, res) => {
   try {
     const { beyId, visitId, museumId, latitude, longitude } = req.body;
@@ -70,7 +132,7 @@ router.post('/start', protect, async (req, res) => {
       });
     }
 
-    // Check if already completed this bey
+    // Check if already completed this bey - allow replay but don't give duplicate rewards
     const completedChallenge = await PuzzleChallenge.findOne({
       user: req.user._id,
       bey: beyId,
@@ -78,12 +140,32 @@ router.post('/start', protect, async (req, res) => {
     });
 
     if (completedChallenge) {
-      return res.status(400).json({
-        success: false,
-        message: 'You have already completed this bey\'s puzzle',
+      // Allow replay - create a new challenge but mark it as a replay
+      const newChallenge = new PuzzleChallenge({
+        user: req.user._id,
+        bey: beyId,
+        visit: visit._id,
+        museum: bey.primaryMuseum?._id || museumId,
+        totalPieces: bey.puzzle?.totalPieces || 9,
+        status: 'active',
+        startedAt: new Date(),
+        isReplay: true // Mark as replay so we don't give duplicate rewards
+      });
+
+      await newChallenge.save();
+      await newChallenge.populate('bey', 'name puzzle');
+
+      return res.status(201).json({
+        success: true,
+        message: 'Starting replay challenge (no additional rewards)',
         data: {
-          completedAt: completedChallenge.completedAt,
-          pointsEarned: completedChallenge.totalPoints
+          challenge: newChallenge,
+          puzzleGrid: {
+            rows: bey.puzzle?.gridSize?.rows || 3,
+            cols: bey.puzzle?.gridSize?.cols || 3,
+            totalPieces: bey.puzzle?.totalPieces || 9
+          },
+          isReplay: true
         }
       });
     }
@@ -134,9 +216,71 @@ router.post('/start', protect, async (req, res) => {
   }
 });
 
-// @route   POST /api/challenges/:id/collect-piece
-// @desc    Collect a puzzle piece (AR interaction)
-// @access  Private
+/**
+ * @swagger
+ * /challenges/{id}/collect-piece:
+ *   post:
+ *     summary: Collect a puzzle piece (AR interaction)
+ *     tags: [Challenges]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Challenge ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - pieceIndex
+ *             properties:
+ *               pieceIndex:
+ *                 type: integer
+ *                 minimum: 0
+ *                 maximum: 8
+ *                 description: Index of the puzzle piece (0-8)
+ *               latitude:
+ *                 type: number
+ *               longitude:
+ *                 type: number
+ *               hotspotName:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Piece collected
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     pieceIndex:
+ *                       type: integer
+ *                     piecesCollected:
+ *                       type: integer
+ *                     totalPieces:
+ *                       type: integer
+ *                     pointsEarned:
+ *                       type: integer
+ *                     isComplete:
+ *                       type: boolean
+ *       400:
+ *         description: Invalid piece index or already collected
+ *       404:
+ *         description: Active challenge not found
+ */
 router.post('/:id/collect-piece', protect, async (req, res) => {
   try {
     const { pieceIndex, latitude, longitude, hotspotName } = req.body;

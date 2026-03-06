@@ -5,9 +5,62 @@ const Museum = require('../models/Museum');
 const { protect } = require('../middleware/auth');
 const { verifyLocation, checkLocation } = require('../middleware/location');
 
-// @route   POST /api/visits/start
-// @desc    Start a new museum visit
-// @access  Private
+/**
+ * @swagger
+ * /visits/start:
+ *   post:
+ *     summary: Start a new museum visit
+ *     tags: [Visits]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - museumId
+ *             properties:
+ *               museumId:
+ *                 type: string
+ *                 description: Museum ID to start visit at
+ *               latitude:
+ *                 type: number
+ *                 description: User's current latitude
+ *               longitude:
+ *                 type: number
+ *                 description: User's current longitude
+ *               verificationMethod:
+ *                 type: string
+ *                 enum: [gps, qr_code]
+ *                 default: gps
+ *     responses:
+ *       201:
+ *         description: Visit started successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     visit:
+ *                       $ref: '#/components/schemas/Visit'
+ *                     locationVerified:
+ *                       type: boolean
+ *                     museum:
+ *                       type: object
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         description: Museum not found
+ */
 router.post('/start', protect, async (req, res) => {
   try {
     const { museumId, latitude, longitude, verificationMethod = 'gps' } = req.body;
@@ -83,9 +136,59 @@ router.post('/start', protect, async (req, res) => {
   }
 });
 
-// @route   PUT /api/visits/:id/end
-// @desc    End a museum visit
-// @access  Private
+/**
+ * @swagger
+ * /visits/{id}/end:
+ *   put:
+ *     summary: End a museum visit
+ *     tags: [Visits]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Visit ID
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               rating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *               feedback:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Visit completed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     visit:
+ *                       $ref: '#/components/schemas/Visit'
+ *                     duration:
+ *                       type: integer
+ *                     pointsEarned:
+ *                       type: integer
+ *       400:
+ *         description: Visit is not active
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
 router.put('/:id/end', protect, async (req, res) => {
   try {
     const { rating, feedback } = req.body;
@@ -136,9 +239,31 @@ router.put('/:id/end', protect, async (req, res) => {
   }
 });
 
-// @route   GET /api/visits/active
-// @desc    Get user's active visit
-// @access  Private
+/**
+ * @swagger
+ * /visits/active:
+ *   get:
+ *     summary: Get user's active visit
+ *     tags: [Visits]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Active visit details or null
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 hasActiveVisit:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Visit'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/active', protect, async (req, res) => {
   try {
     const visit = await Visit.findOne({
@@ -219,6 +344,34 @@ router.put('/:id/location', protect, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating location',
+      error: error.message
+    });
+  }
+});
+
+// @route   GET /api/visits/history
+// @desc    Get user's visit history
+// @access  Private
+router.get('/history', protect, async (req, res) => {
+  try {
+    const { limit = 20, status } = req.query;
+    
+    const query = { user: req.user._id };
+    if (status) query.status = status;
+
+    const visits = await Visit.find(query)
+      .populate('museum', 'name location images')
+      .sort({ startDate: -1 })
+      .limit(parseInt(limit));
+
+    res.json({
+      success: true,
+      data: visits
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching visit history',
       error: error.message
     });
   }

@@ -7,9 +7,47 @@ const UserReward = require('../models/UserReward');
 const { protect } = require('../middleware/auth');
 const { uploadSingle } = require('../middleware/upload');
 
-// @route   GET /api/users/profile
-// @desc    Get user profile with stats
-// @access  Private
+/**
+ * @swagger
+ * /users/profile:
+ *   get:
+ *     summary: Get user profile with stats
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile with statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       $ref: '#/components/schemas/User'
+ *                     stats:
+ *                       type: object
+ *                       properties:
+ *                         totalVisits:
+ *                           type: integer
+ *                         completedChallenges:
+ *                           type: integer
+ *                         totalRewards:
+ *                           type: integer
+ *                         availableRewards:
+ *                           type: integer
+ *                     rewards:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/UserReward'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/profile', protect, async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
@@ -47,9 +85,43 @@ router.get('/profile', protect, async (req, res) => {
   }
 });
 
-// @route   PUT /api/users/profile
-// @desc    Update user profile
-// @access  Private
+/**
+ * @swagger
+ * /users/profile:
+ *   put:
+ *     summary: Update user profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 minLength: 3
+ *                 maxLength: 30
+ *     responses:
+ *       200:
+ *         description: Profile updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Username already taken
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.put('/profile', protect, async (req, res) => {
   try {
     const { username } = req.body;
@@ -90,9 +162,47 @@ router.put('/profile', protect, async (req, res) => {
   }
 });
 
-// @route   POST /api/users/profile/image
-// @desc    Upload profile image
-// @access  Private
+/**
+ * @swagger
+ * /users/profile/image:
+ *   post:
+ *     summary: Upload profile image
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               profileImage:
+ *                 type: string
+ *                 format: binary
+ *                 description: Image file (jpg, png, etc.)
+ *     responses:
+ *       200:
+ *         description: Profile image uploaded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     profileImage:
+ *                       type: string
+ *       400:
+ *         description: No image uploaded
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post('/profile/image', protect, uploadSingle('profileImage'), async (req, res) => {
   try {
     if (!req.file) {
@@ -126,9 +236,47 @@ router.post('/profile/image', protect, uploadSingle('profileImage'), async (req,
   }
 });
 
-// @route   GET /api/users/visits
-// @desc    Get user visit history
-// @access  Private
+/**
+ * @swagger
+ * /users/visits:
+ *   get:
+ *     summary: Get user visit history
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: List of user visits
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     visits:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Visit'
+ *                     pagination:
+ *                       $ref: '#/components/schemas/Pagination'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/visits', protect, async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
@@ -229,27 +377,122 @@ router.get('/rewards', protect, async (req, res) => {
   }
 });
 
-// @route   GET /api/users/leaderboard
-// @desc    Get leaderboard
-// @access  Public
-router.get('/leaderboard', async (req, res) => {
+// @route   GET /api/users/me/stats
+// @desc    Get detailed user stats
+// @access  Private
+router.get('/me/stats', protect, async (req, res) => {
   try {
-    const { limit = 10 } = req.query;
-
-    const leaderboard = await User.find()
-      .select('username profileImage totalPoints completedBeys')
-      .sort({ totalPoints: -1 })
-      .limit(parseInt(limit));
+    const user = await User.findById(req.user._id);
+    
+    const totalVisits = await Visit.countDocuments({ user: req.user._id });
+    const completedChallenges = await PuzzleChallenge.countDocuments({ 
+      user: req.user._id, 
+      status: 'completed' 
+    });
+    const activeChallenges = await PuzzleChallenge.countDocuments({ 
+      user: req.user._id, 
+      status: 'active' 
+    });
+    const rewards = await UserReward.countDocuments({ user: req.user._id });
+    
+    // Calculate total games played (challenges)
+    const gamesPlayed = await PuzzleChallenge.countDocuments({ user: req.user._id });
+    
+    // Get unique museums visited
+    const uniqueMuseums = await Visit.distinct('museum', { user: req.user._id });
 
     res.json({
       success: true,
-      data: leaderboard.map((user, index) => ({
-        rank: index + 1,
-        username: user.username,
-        profileImage: user.profileImage,
-        totalPoints: user.totalPoints,
-        beysCompleted: user.completedBeys.length
-      }))
+      data: {
+        totalPoints: user.totalPoints || 0,
+        totalVisits,
+        uniqueMuseumsVisited: uniqueMuseums.length,
+        completedChallenges,
+        activeChallenges,
+        totalRewards: rewards,
+        gamesPlayed,
+        level: Math.floor((user.totalPoints || 0) / 500) + 1,
+        completedBeys: user.completedBeys?.length || 0,
+        streak: user.currentStreak || 0,
+        lastActive: user.lastLoginAt
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching stats',
+      error: error.message
+    });
+  }
+});
+
+// @route   GET /api/users/leaderboard
+// @desc    Get leaderboard with time period filter
+// @access  Public
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const { limit = 20, period = 'allTime' } = req.query;
+
+    // Calculate date filter based on period
+    let dateFilter = {};
+    const now = new Date();
+    
+    switch(period) {
+      case 'daily':
+        dateFilter = { 
+          lastLoginAt: { 
+            $gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()) 
+          } 
+        };
+        break;
+      case 'weekly':
+        const weekAgo = new Date(now);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        dateFilter = { lastLoginAt: { $gte: weekAgo } };
+        break;
+      case 'monthly':
+        const monthAgo = new Date(now);
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        dateFilter = { lastLoginAt: { $gte: monthAgo } };
+        break;
+      default:
+        // allTime - no filter
+        break;
+    }
+
+    const leaderboard = await User.find(dateFilter)
+      .select('username firstName lastName profileImage totalPoints completedBeys isStudent')
+      .sort({ totalPoints: -1 })
+      .limit(parseInt(limit));
+
+    // Get additional stats for each user
+    const enrichedLeaderboard = await Promise.all(
+      leaderboard.map(async (user, index) => {
+        const gamesPlayed = await PuzzleChallenge.countDocuments({ user: user._id });
+        const puzzlesCompleted = await PuzzleChallenge.countDocuments({ 
+          user: user._id, 
+          status: 'completed' 
+        });
+        
+        return {
+          rank: index + 1,
+          user: {
+            _id: user._id,
+            firstName: user.firstName || user.username,
+            lastName: user.lastName || '',
+            avatar: user.profileImage,
+            isStudent: user.isStudent
+          },
+          score: user.totalPoints || 0,
+          gamesPlayed,
+          puzzlesCompleted
+        };
+      })
+    );
+
+    res.json({
+      success: true,
+      data: enrichedLeaderboard
     });
   } catch (error) {
     res.status(500).json({

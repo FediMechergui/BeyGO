@@ -8,9 +8,57 @@ require('../models/Dynasty');
 require('../models/Museum');
 const { protect } = require('../middleware/auth');
 
-// @route   GET /api/beys
-// @desc    Get all beys
-// @access  Public
+/**
+ * @swagger
+ * /beys:
+ *   get:
+ *     summary: Get all beys
+ *     tags: [Beys]
+ *     parameters:
+ *       - in: query
+ *         name: dynasty
+ *         schema:
+ *           type: string
+ *         description: Filter by dynasty ID
+ *       - in: query
+ *         name: museum
+ *         schema:
+ *           type: string
+ *         description: Filter by primary museum ID
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Items per page
+ *     responses:
+ *       200:
+ *         description: List of beys with pagination
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     beys:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Bey'
+ *                     pagination:
+ *                       $ref: '#/components/schemas/Pagination'
+ */
 router.get('/', async (req, res) => {
   try {
     const { dynasty, museum, page = 1, limit = 50 } = req.query;
@@ -51,9 +99,44 @@ router.get('/', async (req, res) => {
   }
 });
 
-// @route   GET /api/beys/timeline
-// @desc    Get beys in timeline format
-// @access  Public
+/**
+ * @swagger
+ * /beys/timeline:
+ *   get:
+ *     summary: Get beys in timeline format
+ *     tags: [Beys]
+ *     responses:
+ *       200:
+ *         description: Timeline of all beys sorted by reign start
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       reignStart:
+ *                         type: integer
+ *                       reignEnd:
+ *                         type: integer
+ *                       dynasty:
+ *                         $ref: '#/components/schemas/Dynasty'
+ *                       portraitImage:
+ *                         type: string
+ *                       reignEndType:
+ *                         type: string
+ */
 router.get('/timeline', async (req, res) => {
   try {
     const beys = await Bey.find({ isActive: true })
@@ -76,9 +159,34 @@ router.get('/timeline', async (req, res) => {
   }
 });
 
-// @route   GET /api/beys/:id
-// @desc    Get single bey details
-// @access  Public
+/**
+ * @swagger
+ * /beys/{id}:
+ *   get:
+ *     summary: Get single bey details
+ *     tags: [Beys]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bey ID
+ *     responses:
+ *       200:
+ *         description: Full bey details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Bey'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
 router.get('/:id', async (req, res) => {
   try {
     const bey = await Bey.findById(req.params.id)
@@ -110,9 +218,50 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// @route   GET /api/beys/:id/puzzle-info
-// @desc    Get puzzle information for a bey (without revealing full image)
-// @access  Public
+/**
+ * @swagger
+ * /beys/{id}/puzzle-info:
+ *   get:
+ *     summary: Get puzzle information for a bey
+ *     tags: [Beys]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bey ID
+ *     responses:
+ *       200:
+ *         description: Puzzle info (without revealing full image)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                     puzzle:
+ *                       type: object
+ *                     pointsValue:
+ *                       type: integer
+ *                     reward:
+ *                       type: string
+ *                     stats:
+ *                       type: object
+ *                       properties:
+ *                         timesCompleted:
+ *                           type: integer
+ *                         averageTime:
+ *                           type: number
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
 router.get('/:id/puzzle-info', async (req, res) => {
   try {
     const bey = await Bey.findById(req.params.id)
@@ -147,9 +296,51 @@ router.get('/:id/puzzle-info', async (req, res) => {
   }
 });
 
-// @route   GET /api/beys/:id/user-progress
-// @desc    Get user's progress on a specific bey puzzle
-// @access  Private
+/**
+ * @swagger
+ * /beys/{id}/user-progress:
+ *   get:
+ *     summary: Get user's progress on a specific bey puzzle
+ *     tags: [Beys]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Bey ID
+ *     responses:
+ *       200:
+ *         description: User's puzzle progress
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     hasStarted:
+ *                       type: boolean
+ *                     completed:
+ *                       type: boolean
+ *                     status:
+ *                       type: string
+ *                     piecesCollected:
+ *                       type: integer
+ *                     totalPieces:
+ *                       type: integer
+ *                     completionPercentage:
+ *                       type: number
+ *                     pointsEarned:
+ *                       type: integer
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.get('/:id/user-progress', protect, async (req, res) => {
   try {
     const challenge = await PuzzleChallenge.findOne({
@@ -188,9 +379,37 @@ router.get('/:id/user-progress', protect, async (req, res) => {
   }
 });
 
-// @route   GET /api/beys/search/:query
-// @desc    Search beys by name
-// @access  Public
+/**
+ * @swagger
+ * /beys/search/{query}:
+ *   get:
+ *     summary: Search beys by name
+ *     tags: [Beys]
+ *     parameters:
+ *       - in: path
+ *         name: query
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Search query
+ *         example: Hussein
+ *     responses:
+ *       200:
+ *         description: Search results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Bey'
+ */
 router.get('/search/:query', async (req, res) => {
   try {
     const searchQuery = req.params.query;

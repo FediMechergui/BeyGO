@@ -18,9 +18,38 @@ const logMuseum = (action, museum) => {
   }
 };
 
-// @route   GET /api/museums
-// @desc    Get all museums
-// @access  Public
+/**
+ * @swagger
+ * /museums:
+ *   get:
+ *     summary: Get all museums
+ *     tags: [Museums]
+ *     parameters:
+ *       - in: query
+ *         name: active
+ *         schema:
+ *           type: boolean
+ *           default: true
+ *         description: Filter by active status
+ *     responses:
+ *       200:
+ *         description: List of museums
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Museum'
+ *       500:
+ *         description: Server error
+ */
 router.get('/', async (req, res) => {
   try {
     const { active = true } = req.query;
@@ -49,9 +78,58 @@ router.get('/', async (req, res) => {
   }
 });
 
-// @route   GET /api/museums/nearby
-// @desc    Get museums near user location
-// @access  Public
+/**
+ * @swagger
+ * /museums/nearby:
+ *   get:
+ *     summary: Get museums near user location
+ *     tags: [Museums]
+ *     parameters:
+ *       - in: query
+ *         name: latitude
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: User's latitude
+ *         example: 36.8095
+ *       - in: query
+ *         name: longitude
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: User's longitude
+ *         example: 10.1345
+ *       - in: query
+ *         name: radius
+ *         schema:
+ *           type: integer
+ *           default: 5000
+ *         description: Search radius in meters
+ *     responses:
+ *       200:
+ *         description: List of nearby museums with distance
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     allOf:
+ *                       - $ref: '#/components/schemas/Museum'
+ *                       - type: object
+ *                         properties:
+ *                           distance:
+ *                             type: integer
+ *                             description: Distance in meters
+ *       400:
+ *         description: Location coordinates required
+ */
 router.get('/nearby', async (req, res) => {
   try {
     const { latitude, longitude, radius = 5000 } = req.query; // radius in meters
@@ -104,9 +182,51 @@ router.get('/nearby', async (req, res) => {
   }
 });
 
-// @route   GET /api/museums/detect
-// @desc    Detect current museum based on location
-// @access  Public
+/**
+ * @swagger
+ * /museums/detect:
+ *   get:
+ *     summary: Detect if user is inside a museum
+ *     tags: [Museums]
+ *     parameters:
+ *       - in: query
+ *         name: latitude
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: User's latitude
+ *       - in: query
+ *         name: longitude
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: User's longitude
+ *     responses:
+ *       200:
+ *         description: Museum detection result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 detected:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     museum:
+ *                       $ref: '#/components/schemas/Museum'
+ *                     availableBeys:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Bey'
+ *       400:
+ *         description: Location coordinates required
+ */
 router.get('/detect', async (req, res) => {
   try {
     const { latitude, longitude } = req.query;
@@ -160,9 +280,41 @@ router.get('/detect', async (req, res) => {
   }
 });
 
-// @route   GET /api/museums/:id
-// @desc    Get single museum with available beys
-// @access  Public
+/**
+ * @swagger
+ * /museums/{id}:
+ *   get:
+ *     summary: Get single museum with available beys
+ *     tags: [Museums]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Museum ID
+ *     responses:
+ *       200:
+ *         description: Museum details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   allOf:
+ *                     - $ref: '#/components/schemas/Museum'
+ *                     - type: object
+ *                       properties:
+ *                         availableBeys:
+ *                           type: array
+ *                           items:
+ *                             $ref: '#/components/schemas/Bey'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
 router.get('/:id', async (req, res) => {
   try {
     const museum = await Museum.findById(req.params.id);
@@ -202,9 +354,48 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// @route   GET /api/museums/:id/beys
-// @desc    Get all beys in a museum
-// @access  Public
+/**
+ * @swagger
+ * /museums/{id}/beys:
+ *   get:
+ *     summary: Get all beys in a museum
+ *     tags: [Museums]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Museum ID
+ *     responses:
+ *       200:
+ *         description: List of beys in the museum
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     museum:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                     beys:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Bey'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
 router.get('/:id/beys', async (req, res) => {
   try {
     const museum = await Museum.findById(req.params.id);
@@ -247,9 +438,62 @@ router.get('/:id/beys', async (req, res) => {
   }
 });
 
-// @route   GET /api/museums/:id/hotspots
-// @desc    Get AR hotspots for a museum (for puzzle piece collection)
-// @access  Private (requires being at museum)
+/**
+ * @swagger
+ * /museums/{id}/hotspots:
+ *   get:
+ *     summary: Get AR hotspots for a museum (puzzle piece collection)
+ *     tags: [Museums]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Museum ID
+ *       - in: query
+ *         name: latitude
+ *         schema:
+ *           type: number
+ *         description: User's latitude for range verification
+ *       - in: query
+ *         name: longitude
+ *         schema:
+ *           type: number
+ *         description: User's longitude for range verification
+ *       - in: query
+ *         name: devMode
+ *         schema:
+ *           type: boolean
+ *         description: Skip location verification (development only)
+ *     responses:
+ *       200:
+ *         description: AR hotspots for the museum
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     museum:
+ *                       type: string
+ *                     hotspots:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/ARHotspot'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: User not at museum location
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
 router.get('/:id/hotspots', protect, async (req, res) => {
   try {
     const { latitude, longitude, devMode } = req.query;

@@ -1,7 +1,7 @@
 // Environment configuration
 const ENV = {
   dev: {
-    API_URL: 'http://192.168.2.121:5000/api', // Your local IP for Expo Go
+    API_URL: 'http://10.154.62.116:5000/api', // Your local IP for Expo Go
     EMAILJS_SERVICE_ID: 'service_uf3zzhg',
     EMAILJS_PUBLIC_KEY: 'SPvZ0Rs6r2ZupqmZH',
     ENABLE_AR_DEBUG: true,

@@ -4,9 +4,41 @@ const Reward = require('../models/Reward');
 const UserReward = require('../models/UserReward');
 const { protect } = require('../middleware/auth');
 
-// @route   GET /api/rewards
-// @desc    Get all available rewards
-// @access  Public
+/**
+ * @swagger
+ * /rewards:
+ *   get:
+ *     summary: Get all available rewards
+ *     tags: [Rewards]
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [discount, free_entry, gift, badge, certificate]
+ *         description: Filter by reward type
+ *       - in: query
+ *         name: museum
+ *         schema:
+ *           type: string
+ *         description: Filter by museum ID
+ *     responses:
+ *       200:
+ *         description: List of available rewards
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Reward'
+ */
 router.get('/', async (req, res) => {
   try {
     const { type, museum } = req.query;
@@ -33,9 +65,34 @@ router.get('/', async (req, res) => {
   }
 });
 
-// @route   GET /api/rewards/:id
-// @desc    Get single reward
-// @access  Public
+/**
+ * @swagger
+ * /rewards/{id}:
+ *   get:
+ *     summary: Get single reward details
+ *     tags: [Rewards]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Reward ID
+ *     responses:
+ *       200:
+ *         description: Reward details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Reward'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
 router.get('/:id', async (req, res) => {
   try {
     const reward = await Reward.findById(req.params.id)
@@ -62,9 +119,61 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// @route   POST /api/rewards/:id/redeem
-// @desc    Redeem a user reward
-// @access  Private
+/**
+ * @swagger
+ * /rewards/{id}/redeem:
+ *   post:
+ *     summary: Redeem a user reward
+ *     tags: [Rewards]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: UserReward ID (not Reward ID)
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               location:
+ *                 type: object
+ *                 properties:
+ *                   latitude:
+ *                     type: number
+ *                   longitude:
+ *                     type: number
+ *     responses:
+ *       200:
+ *         description: Reward redeemed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     reward:
+ *                       $ref: '#/components/schemas/Reward'
+ *                     redemptionCode:
+ *                       type: string
+ *                     usedAt:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: Reward has expired
+ *       404:
+ *         description: Available reward not found
+ */
 router.post('/:id/redeem', protect, async (req, res) => {
   try {
     const { location } = req.body;
@@ -116,9 +225,58 @@ router.post('/:id/redeem', protect, async (req, res) => {
   }
 });
 
-// @route   GET /api/rewards/verify/:code
-// @desc    Verify a redemption code (for partners/museums)
-// @access  Public (would be protected in production)
+/**
+ * @swagger
+ * /rewards/verify/{code}:
+ *   get:
+ *     summary: Verify a redemption code (for partners/museums)
+ *     tags: [Rewards]
+ *     parameters:
+ *       - in: path
+ *         name: code
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Redemption code to verify
+ *         example: BEY-ABC123
+ *     responses:
+ *       200:
+ *         description: Code verification result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     valid:
+ *                       type: boolean
+ *                     status:
+ *                       type: string
+ *                       enum: [available, used, expired]
+ *                     reward:
+ *                       type: object
+ *                       properties:
+ *                         name:
+ *                           type: string
+ *                         type:
+ *                           type: string
+ *                         discount:
+ *                           type: number
+ *                     user:
+ *                       type: string
+ *                     earnedAt:
+ *                       type: string
+ *                       format: date-time
+ *                     expiresAt:
+ *                       type: string
+ *                       format: date-time
+ *       404:
+ *         description: Invalid redemption code
+ */
 router.get('/verify/:code', async (req, res) => {
   try {
     const userReward = await UserReward.findOne({
